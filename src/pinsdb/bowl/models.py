@@ -116,12 +116,14 @@ class Game:
         if not isinstance(source, pathlib.Path):
             source = pathlib.Path(source)
         
-        games = [
+        all_games = [
             cls.load_game(file)
             for directory in source.iterdir()
             for file in directory.iterdir()
         ]
-        return list(itertools.chain(*games))
+        all_games = list(itertools.chain(*all_games))
+        print(f"Loaded {len(all_games):,} games from the database")
+        return all_games
 
     def construct_frames(self) -> list[list[int]]:
         """Construct frames from list of throws."""
