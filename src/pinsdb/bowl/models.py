@@ -19,6 +19,7 @@ DATABASE_SOURCE: str = "/Users/lucasnelson/Desktop/open_source/pinsdb/.data"
 def extract_components(source: str, database_source: str = None) -> dict[str, str]:
     def extract_date_component(date_component: str) -> datetime.date:
         print(date_component)
+        date_component = f"{date_component[:4]}-{date_component[4:6]}-{date_component[6:]}"
         return datetime.date.fromisoformat(date_component)
     
     def extract_game_component(game_component: str) -> str:
