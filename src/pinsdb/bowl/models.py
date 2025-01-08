@@ -18,9 +18,11 @@ DATABASE_SOURCE: str = "/Users/lucasnelson/Desktop/open_source/pinsdb/.data"
 
 def extract_components(source: str, database_source: str = None) -> dict[str, str]:
     def extract_date_component(date_component: str) -> datetime.date:
+        print(date_component)
         return datetime.date.fromisoformat(date_component)
     
     def extract_game_component(game_component: str) -> str:
+        print(game_component)
         return ''.join(s for s in game_component if s.isdigit())
     
     if database_source:
