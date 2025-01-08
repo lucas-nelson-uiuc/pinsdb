@@ -16,7 +16,7 @@ TOTAL_GAME_SCORE: int = 300
 DATABASE_SOURCE: str = "/Users/lucasnelson/Desktop/open_source/pinsdb/.data"
 
 
-def extract_components(source: str, database_source: str) -> dict[str, str]:
+def extract_components(source: str, database_source: str = None) -> dict[str, str]:
     def extract_date_component(date_component: str) -> datetime.date:
         return datetime.date.fromisoformat(date_component)
     
