@@ -28,7 +28,7 @@ def extract_components(source: str, database_source: str = None) -> dict[str, st
         
     if not database_source:
         database_source = source
-        relative_source = pathlib.Path(source).relative_to(source)
+        relative_source = pathlib.Path(source).relative_to("pinsdb/.data")
     
     date_component, game_component = relative_source.parts
     return {"date": extract_date_component(date_component), "game_id": extract_game_component(game_component)}
