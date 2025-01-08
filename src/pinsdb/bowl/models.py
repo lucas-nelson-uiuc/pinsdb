@@ -23,6 +23,9 @@ def extract_components(source: str, database_source: str = DATABASE_SOURCE) -> d
     def extract_game_component(game_component: str) -> str:
         return ''.join(s for s in game_component if s.isdigit())
     
+    if not database_source:
+        database_source = source
+    
     relative_source = pathlib.Path(source).relative_to(database_source)
     date_component, game_component = relative_source.parts
     return {"date": extract_date_component(date_component), "game_id": extract_game_component(game_component)}
