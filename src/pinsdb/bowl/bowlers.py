@@ -33,5 +33,5 @@ Karly = Bowler(bowler_id="Karly", nicknames=("POO",))
 Ryan = Bowler(bowler_id="Ryan", nicknames=("PEE",))
 
 registered_bowlers = sorted(
-    Alek, Cam, Drew, Jake, Lucas, Naomi, Ryley, Sara, Spencer, Karly, Ryan
+    (Alek, Cam, Drew, Jake, Lucas, Naomi, Ryley, Sara, Spencer, Karly, Ryan)
 )
