@@ -9,13 +9,13 @@ class Bowler:
 
     def __lt__(self, other: "Bowler") -> bool:
         return self.bowler_id < other.bowler_id
-    
+
     def __le__(self, other: "Bowler") -> bool:
         return self.bowler_id <= other.bowler_id
-    
+
     def __gt__(self, other: "Bowler") -> bool:
         return self.bowler_id > other.bowler_id
-    
+
     def __ge__(self, other: "Bowler") -> bool:
         return self.bowler_id >= other.bowler_id
 
@@ -33,15 +33,5 @@ Karly = Bowler(bowler_id="Karly", nicknames=("POO",))
 Ryan = Bowler(bowler_id="Ryan", nicknames=("PEE",))
 
 registered_bowlers = sorted(
-    Alek,
-    Cam,
-    Drew,
-    Jake,
-    Lucas,
-    Naomi,
-    Ryley,
-    Sara,
-    Spencer,
-    Karly,
-    Ryan
+    Alek, Cam, Drew, Jake, Lucas, Naomi, Ryley, Sara, Spencer, Karly, Ryan
 )
