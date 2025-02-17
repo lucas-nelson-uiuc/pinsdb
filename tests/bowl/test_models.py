@@ -1,4 +1,4 @@
-from pinsdb.bowl.models import Game
+from pinsdb.models import Game
 
 import pytest
 

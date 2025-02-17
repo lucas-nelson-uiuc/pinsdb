@@ -3,13 +3,10 @@ from attrs import define, field
 import datetime
 from loguru import logger
 import itertools
-from pinsdb.bowl.bowlers import Bowler, registered_bowlers
+from pinsdb.bowlers import Bowler, REGISTERED_BOWLERS
 
-
-TOTAL_FRAME_PINS: int = 10
-TOTAL_GAME_PINS: int = 120
-TOTAL_GAME_SCORE: int = 300
-DATABASE_SOURCE: str = "/Users/lucasnelson/Desktop/open_source/pinsdb/.data"
+from pinsdb.db import DATABASE_SOURCE
+from pinsdb.constants import TOTAL_FRAME_PINS
 
 
 def extract_components(
@@ -40,7 +37,7 @@ def extract_components(
 
 @define
 class Frame:
-    throws: tuple[int] = field()
+    throws: tuple[int]
 
     def is_strike(self):
         """Detect if frame is a strike."""
@@ -99,7 +96,7 @@ class Game:
                             filter(
                                 lambda registered: (bowler == registered.bowler_id)
                                 or (bowler in registered.nicknames),
-                                registered_bowlers,
+                                REGISTERED_BOWLERS,
                             )
                         )[0],
                         throws=throws,
@@ -117,7 +114,7 @@ class Game:
                         filter(
                             lambda bowler: (bowler == bowler.bowler_id)
                             or (bowler in bowler.nicknames),
-                            registered_bowlers,
+                            REGISTERED_BOWLERS,
                         )
                     )[0],
                     throws=throws,
@@ -146,63 +143,3 @@ class Game:
         all_games = list(itertools.chain(*all_games))
         logger.success(f"Loaded {len(all_games):,} games from the database")
         return all_games
-
-    def construct_frames(self) -> list[list[int]]:
-        """Construct frames from list of throws."""
-        frames = []
-        frame = []
-        for throw in self.throws:
-            frame.append(throw)
-            if len(frames) < 9:  # For the first 9 frames
-                if sum(frame) == 10 or len(frame) == 2:  # Strike or complete frame
-                    frames.append(frame)
-                    frame = []
-            else:  # 10th frame
-                if len(frame) == 3 or (len(frame) == 2 and sum(frame) < 10):
-                    frames.append(frame)
-                    break  # End after processing the 10th frame
-        return frames
-
-    def score_pins(self) -> int:
-        """Return score not following bowling scoring conventions."""
-        if not self.throws:
-            return 0
-        return sum(self.throws)
-
-    def score_game(self) -> int:
-        """
-        Return score following bowling scoring conventions.
-
-        Notes
-        -----
-        Link: https://www.bowlinggenius.com/#
-        """
-        if not self.throws:
-            return 0
-
-        frames = self.construct_frames()
-        bonus = [Frame(frame).detect_bonus() for frame in frames]
-
-        current_index = 0
-        current_sum = 0
-        for i, (frame, bonus) in enumerate(zip(frames, bonus)):
-            frame = Frame(frame)
-            if i > 8:
-                bonus = None
-            if bonus:
-                if frame.is_spare():
-                    bonus_frames = self.throws[
-                        current_index : current_index + bonus + 2
-                    ]
-                if frame.is_strike():
-                    bonus_frames = self.throws[
-                        current_index : current_index + bonus + 1
-                    ]
-                current_sum += sum(bonus_frames)
-            else:
-                bonus_frames = []
-                current_sum += sum(frame.throws)
-
-            current_index += len(frame.throws)
-
-        return current_sum
