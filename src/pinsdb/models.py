@@ -1,5 +1,5 @@
 import pathlib
-from attrs import define, field
+from attrs import define
 import datetime
 from loguru import logger
 import itertools
