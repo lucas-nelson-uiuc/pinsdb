@@ -29,13 +29,9 @@ def score_game(throws: list[int] = None) -> int:
             bonus = None
         if bonus:
             if frame.is_spare():
-                bonus_frames = throws[
-                    current_index : current_index + bonus + 2
-                ]
+                bonus_frames = throws[current_index : current_index + bonus + 2]
             if frame.is_strike():
-                bonus_frames = throws[
-                    current_index : current_index + bonus + 1
-                ]
+                bonus_frames = throws[current_index : current_index + bonus + 1]
             current_sum += sum(bonus_frames)
         else:
             bonus_frames = []
