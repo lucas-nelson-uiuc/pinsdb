@@ -88,32 +88,13 @@ class Game:
         except Exception as e:
             logger.error(f"Error loading data for {bowler} from: {source}")
             raise e
-        if not bowler_id:
-            try:
-                return [
-                    Game(
-                        bowler=list(
-                            filter(
-                                lambda registered: (bowler == registered.bowler_id)
-                                or (bowler in registered.nicknames),
-                                REGISTERED_BOWLERS,
-                            )
-                        )[0],
-                        throws=throws,
-                        **extract_components(source),
-                    )
-                    for bowler, throws in bowlers.items()
-                ]
-            except Exception as e:
-                logger.error(f"Cannot load game for {bowler}: {source}")
-                raise e
         try:
             return [
                 Game(
                     bowler=list(
                         filter(
-                            lambda bowler: (bowler == bowler.bowler_id)
-                            or (bowler in bowler.nicknames),
+                            lambda registered: (bowler == registered.bowler_id)
+                            or (bowler in registered.nicknames),
                             REGISTERED_BOWLERS,
                         )
                     )[0],
@@ -121,11 +102,11 @@ class Game:
                     **extract_components(source),
                 )
                 for bowler, throws in bowlers.items()
-                if (bowler in bowler_id) or (bowler == bowler_id)
             ]
         except Exception as e:
             logger.error(f"Cannot load game for {bowler}: {source}")
             raise e
+
 
     @classmethod
     def load_games(cls, source: str | pathlib.Path = None) -> list["Game"]:
