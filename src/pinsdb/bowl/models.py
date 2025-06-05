@@ -1,9 +1,5 @@
-from typing import Sequence
 import pathlib
-import re
-import operator
-import functools
-from attrs import define, field, validators
+from attrs import define, field
 import datetime
 from loguru import logger
 import itertools

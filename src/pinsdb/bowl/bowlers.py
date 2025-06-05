@@ -1,11 +1,11 @@
 from typing import Sequence
-from attrs import define
+from attrs import define, field
 
 
 @define
 class Bowler:
     bowler_id: str
-    nicknames: Sequence[str]
+    nicknames: Sequence[str] = field(factory=tuple)
 
 
 Alek = Bowler(bowler_id="Alek", nicknames=("A", "AL", "ALE", "ALK", "ALEK", "POP"))
