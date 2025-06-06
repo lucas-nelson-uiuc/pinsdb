@@ -20,6 +20,10 @@ dependencies = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+
+[tool.hatch.build]
+packages = ["src/pinsdb"]
+
 [dependency-groups]
 dev = [
     "pytest>=8.3.4",

@@ -3,7 +3,7 @@ from attrs import define, field
 import datetime
 from loguru import logger
 import itertools
-from pinsdb.bowl.bowlers import Bowler, registered_bowlers
+from pinsdb.bowlers import Bowler, registered_bowlers
 
 
 TOTAL_FRAME_PINS: int = 10
