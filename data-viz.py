@@ -298,35 +298,36 @@ def _(mo):
 
 
 @app.cell
-def _(frames_data, pl):
-    heatmap_data = (
-        frames_data.select("bowler_id", "game_id", "date", "frames")
-        .with_columns(
-            pl.col("frames").list.first().alias("first_throw"),
-            pl.when(
-                (pl.col("frames").list.last() == pl.col("frames").list.first())
-                & (pl.col("frames").list.last() == 10)
+def _(frames_data, pl, sns):
+    def plot_pin_sequence(bowler_id: str):
+        heatmap_data = (
+            frames_data.select("bowler_id", "game_id", "date", "frames")
+            .filter(pl.col("bowler_id") == bowler_id)
+            .with_columns(
+                pl.col("frames").list.first().alias("first_throw"),
+                pl.when(
+                    (pl.col("frames").list.last() == pl.col("frames").list.first())
+                    & (pl.col("frames").list.last() == 10)
+                )
+                .then(pl.lit(0))
+                .otherwise(pl.col("frames").list.last())
+                .alias("last_throw"),
             )
-            .then(pl.lit(0))
-            .otherwise(pl.col("frames").list.last())
-            .alias("last_throw"),
+            .pivot(
+                on="last_throw",
+                index="first_throw",
+                values="last_throw",
+                aggregate_function=pl.element().count(),
+            )
+            .fill_null(0)
+            .sort("first_throw")
+            .select("first_throw", *map(str, range(11)))
         )
-        .pivot(
-            on="last_throw",
-            index="first_throw",
-            values="last_throw",
-            aggregate_function=pl.element().count(),
-        )
-        .fill_null(0)
-        .sort("first_throw")
-        .select("first_throw", *map(str, range(11)))
-    )
-    return (heatmap_data,)
+
+        return sns.heatmap(heatmap_data.drop("first_throw"))
 
 
-@app.cell
-def _(heatmap_data, sns):
-    sns.heatmap(heatmap_data.drop("first_throw"))
+    plot_pin_sequence("Lucas")
     return
 
 
