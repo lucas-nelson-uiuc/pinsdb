@@ -77,7 +77,7 @@ class Game:
     date: datetime.date
 
     @classmethod
-    def load_game(cls, source: str, *bowler_id: str) -> list["Game"]:
+    def load_game(cls, source: str, *bowler_id: str, verbose: bool = True) -> list["Game"]:
         """Load game from source."""
         bowlers = dict()
         try:
@@ -87,7 +87,9 @@ class Game:
                     bowlers[bowler] = [int(throw) for throw in throws]
         except Exception as e:
             logger.error(f"Error loading data for {bowler} from: {source}")
-            raise e
+            if verbose:
+                raise e
+
         try:
             return [
                 Game(
@@ -105,11 +107,12 @@ class Game:
             ]
         except Exception as e:
             logger.error(f"Cannot load game for {bowler}: {source}")
-            raise e
+            if verbose:
+                raise e
 
 
     @classmethod
-    def load_games(cls, source: str | pathlib.Path = None) -> list["Game"]:
+    def load_games(cls, source: str | pathlib.Path = None, verbose: bool = True) -> list["Game"]:
         """Load file(s) from source(s)."""
         if not source:
             source = DATABASE_SOURCE
@@ -117,7 +120,7 @@ class Game:
             source = pathlib.Path(source)
 
         all_games = [
-            cls.load_game(file)
+            cls.load_game(file, verbose=verbose)
             for directory in source.iterdir()
             for file in directory.iterdir()
         ]

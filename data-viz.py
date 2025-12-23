@@ -40,7 +40,8 @@ def _(mo):
 def _(Game, attrs, pl):
     # games stored as a Python object
     all_games = sorted(
-        Game.load_games(), key=lambda g: (g.date, g.game_id, g.bowler.bowler_id)
+        Game.load_games(verbose=False),
+        key=lambda g: (g.date, g.game_id, g.bowler.bowler_id),
     )
 
     # games stored as a Polars DataFrame
@@ -344,30 +345,142 @@ def _(mo):
 
 
 @app.cell
+def _(bowler_frame):
+    print(bowler_frame)
+    return
+
+
+@app.cell
 def _(bowler_frame, pl, plt, sns):
     def plot_rolling_mean(
-        data: pl.DataFrame, bowler_id: str, window: int = 10
+        data: pl.DataFrame,
+        bowler_ids: list[str] | None = None,
+        window: int = 10,
     ) -> None:
-        rolling_mean = (
-            bowler_frame.filter(pl.col("bowler_id") == pl.lit(bowler_id))
-            .with_columns(pl.col("throws").bowling.compute_score())
+        df = data
+
+        if bowler_ids is not None:
+            df = df.filter(pl.col("bowler_id").is_in(bowler_ids))
+
+        rolling = (
+            df.with_columns(pl.col("throws").bowling.compute_score())
             .with_columns(
-                pl.col("score").rolling_mean(window).alias("rolling_mean")
+                pl.col("score")
+                .rolling_mean(window)
+                .over("bowler_id")
+                .alias("rolling_mean"),
+                pl.col("score")
+                .rolling_std(window)
+                .over("bowler_id")
+                .alias("rolling_std"),
             )
+            .sort(["bowler_id", "date"])
         )
-        ax = sns.scatterplot(
-            data=rolling_mean.to_pandas(), x="date", y="score", hue="score"
+
+        pdf = rolling.to_pandas()
+
+        g = sns.FacetGrid(
+            pdf,
+            col="bowler_id",
+            col_wrap=3,
+            height=3,
+            aspect=1.2,
+            sharex=True,
+            sharey=True,
+            despine=True,
         )
-        sns.lineplot(
-            data=rolling_mean.to_pandas(),
+
+        # Scatter colored by score
+        g.map_dataframe(
+            sns.scatterplot,
+            x="date",
+            y="score",
+            hue="score",
+            palette="viridis",
+            alpha=0.6,
+            s=30,
+            legend=False,
+        )
+
+        # Rolling mean line
+        g.map_dataframe(
+            sns.lineplot,
             x="date",
             y="rolling_mean",
+            color="black",
+            linewidth=1.8,
         )
-        ax.get_legend().remove()
+
+        # Rolling std band with dashed borders
+        def std_band(data, **kwargs):
+            plt.fill_between(
+                data["date"],
+                data["rolling_mean"] - data["rolling_std"],
+                data["rolling_mean"] + data["rolling_std"],
+                color="black",
+                alpha=0.15,
+                linewidth=0,
+            )
+            # dashed upper/lower lines
+            plt.plot(
+                data["date"],
+                data["rolling_mean"] + data["rolling_std"],
+                color="black",
+                linestyle="--",
+                linewidth=1,
+            )
+            plt.plot(
+                data["date"],
+                data["rolling_mean"] - data["rolling_std"],
+                color="black",
+                linestyle="--",
+                linewidth=1,
+            )
+
+        g.map_dataframe(std_band)
+
+        g.set_titles("{col_name}")
+        g.set_axis_labels("Date", "Score")
+
+        # Layout control
+        g.fig.set_size_inches(12, 8)
+        g.fig.subplots_adjust(
+            right=0.88,
+            top=0.90,
+            wspace=0.15,
+            hspace=0.25,
+        )
+
+        # Shared colorbar
+        norm = plt.Normalize(pdf["score"].min(), pdf["score"].max())
+        sm = plt.cm.ScalarMappable(norm=norm, cmap="viridis")
+        sm.set_array([])
+
+        cbar = g.fig.colorbar(
+            sm,
+            ax=g.axes,
+            fraction=0.035,
+            pad=0.02,
+        )
+        cbar.set_label("Score")
+
+        g.fig.suptitle(
+            f"Rolling Mean ± Std (window={window})",
+            fontsize=14,
+        )
+
+        # Rotate date ticks
+        for ax in g.axes.flat:
+            ax.tick_params(axis="x", labelrotation=30)
+
         plt.show()
 
 
-    plot_rolling_mean(bowler_frame, bowler_id="Lucas", window=10)
+    plot_rolling_mean(
+        bowler_frame,
+        bowler_ids=("Alek", "Cam", "Jake", "Lucas", "Ryley", "Spencer", "Tristan"),
+        window=12,
+    )
     return
 
 
