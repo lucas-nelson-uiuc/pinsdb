@@ -10,6 +10,7 @@ dependencies = [
     "great-tables>=0.16.1",
     "ipykernel>=6.29.5",
     "loguru>=0.7.3",
+    "marimo>=0.18.4",
     "matplotlib>=3.10.0",
     "pandas>=2.2.3",
     "polars>=1.19.0",

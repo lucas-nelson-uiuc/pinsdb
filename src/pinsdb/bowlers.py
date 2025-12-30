@@ -32,9 +32,30 @@ Spencer = Bowler(bowler_id="Spencer", nicknames=("S", "SPE", "SPO", "SPEN", "SPE
 Karly = Bowler(bowler_id="Karly", nicknames=("POO",))
 Ryan = Bowler(bowler_id="Ryan", nicknames=("PEE",))
 Tristan = Bowler(bowler_id="Tristan", nicknames=("TRI", "BRI"))
-Munson = Bowler(bowler_id="Munson", nicknames=("MU", "MUN",))
+Munson = Bowler(
+    bowler_id="Munson",
+    nicknames=(
+        "MU",
+        "MUN",
+    ),
+)
 Malachi = Bowler(bowler_id="Malachi", nicknames=("MA",))
 
 REGISTERED_BOWLERS = sorted(
-    (Alek, Cam, Drew, Jake, Lucas, Naomi, Ryley, Sara, Spencer, Karly, Ryan, Tristan, Munson)
+    (
+        Alek,
+        Cam,
+        Drew,
+        Jake,
+        Lucas,
+        Naomi,
+        Ryley,
+        Sara,
+        Spencer,
+        Karly,
+        Ryan,
+        Tristan,
+        Munson,
+        Malachi,
+    )
 )

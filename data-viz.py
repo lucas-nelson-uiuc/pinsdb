@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.15"
+__generated_with = "0.18.4"
 app = marimo.App(width="full")
 
 
@@ -21,23 +21,34 @@ def _():
 
     # pinsdb module
     from pinsdb.models import Game
+
     return Game, attrs, mo, pl, plt, sns
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ### Load Games
     ---
     This will load all games from the files in `DATA_DIRECTORY` - until someone else uses this project this will be the local `.data/` folder.
-    """
-    )
+    """)
     return
 
 
 @app.cell
 def _(Game, attrs, pl):
+    # define bowlers to include in `bowler_frame`
+    BOWLERS: tuple[str] = (
+        "Alek",
+        "Cam",
+        "Jake",
+        "Lucas",
+        "Munson",
+        "Ryley",
+        "Spencer",
+        "Tristan",
+    )
+
     # games stored as a Python object
     all_games = sorted(
         Game.load_games(verbose=False),
@@ -50,14 +61,13 @@ def _(Game, attrs, pl):
         .with_columns(pl.col("bowler").struct.field("bowler_id"))
         .sort("date", "game_id")
         .drop("bowler")
+        .filter(pl.col("bowler_id").is_in(BOWLERS))
     )
-    return all_games, bowler_frame
+    return BOWLERS, all_games, bowler_frame
 
 
 @app.cell
 def _(bowler_frame, pl):
-    from pinsdb.namespace.expressions import Bowling
-
     scoring_columns = ["Pins", "Points", "Lowest", "Highest"]
     rates_columns = ["Per Game", "Per Frame", "Per Pin"]
     frequency_columns = ["Strikes", "Spares", "Wombats", "Gutters"]
@@ -141,7 +151,6 @@ def _(
 ):
     from great_tables import GT
 
-
     scoring_palette = "GnBu"
     rates_pallete = "Purples"
     frequency_palette = "Reds"
@@ -150,13 +159,12 @@ def _(
         GT(summary_table)
         .tab_header(
             title="Bowling Statistics",
-            subtitle=f"Overall scoring statistics from {all_games[0].date.strftime('%B %d, %Y')} to {all_games[-1].date.strftime('%B %d, %Y')}",
+            subtitle=f"Range from {all_games[0].date.strftime('%B %d, %Y')} to {all_games[-1].date.strftime('%B %d, %Y')} | Sorted by Total Points",
         )
         .tab_stub(rowname_col="bowler_id")
         .tab_spanner(label="Scoring", columns=scoring_columns)
         .tab_spanner(label="Rates", columns=rates_columns)
         .tab_spanner(label="Frequency", columns=frequency_columns)
-        # .fmt_nanoplot(col_recent_games, reference_line=200)
         .data_color(
             columns=["Pins"],
             palette=scoring_palette,
@@ -203,21 +211,18 @@ def _(
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ### Plot Visuals
     ---
-    """
-    )
+    """)
     return
 
 
 @app.cell
-def _(all_games, pl, sns):
+def _(BOWLERS: tuple[str], all_games, pl, sns):
     from pinsdb.namespace.compute import score_game, score_pins
 
     sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
-
 
     sample_data = pl.DataFrame(
         [
@@ -229,6 +234,7 @@ def _(all_games, pl, sns):
                 "date": game.date,
             }
             for game in all_games
+            if game.bowler.bowler_id in BOWLERS
         ]
     )
     return (sample_data,)
@@ -236,21 +242,17 @@ def _(all_games, pl, sns):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     #### Score Dominance
     ---
     Which bowlers share different scores?
-    """
-    )
+    """)
     return
 
 
 @app.cell
 def _(sample_data, sns):
-    sns.displot(
-        sample_data, x="score", hue="bowler_id", kind="hist", multiple="fill"
-    )
+    sns.displot(sample_data, x="score", hue="bowler_id", kind="kde", multiple="fill")
     return
 
 
@@ -262,21 +264,17 @@ def _(sample_data, sns):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     #### Score Variance
     ---
     How consistent is each bowler?
-    """
-    )
+    """)
     return
 
 
 @app.cell
-def _(sample_data, sns):
-    from pinsdb.bowlers import REGISTERED_BOWLERS
-
-    palette = sns.color_palette("magma", n_colors=len(REGISTERED_BOWLERS))
+def _(BOWLERS: tuple[str], sample_data, sns):
+    palette = sns.color_palette("magma", n_colors=len(BOWLERS))
     sns.set_theme(style="darkgrid", palette=palette)
 
     sns.violinplot(
@@ -288,65 +286,114 @@ def _(sample_data, sns):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     #### Pin Sequence
     ---
     How well do bowlers do on their first throw? second throw?
-    """
-    )
+    """)
     return
 
 
 @app.cell
-def _(frames_data, pl, sns):
-    def plot_pin_sequence(bowler_id: str):
-        heatmap_data = (
-            frames_data.select("bowler_id", "game_id", "date", "frames")
-            .filter(pl.col("bowler_id") == bowler_id)
-            .with_columns(
-                pl.col("frames").list.first().alias("first_throw"),
-                pl.when(
-                    (pl.col("frames").list.last() == pl.col("frames").list.first())
-                    & (pl.col("frames").list.last() == 10)
-                )
-                .then(pl.lit(0))
-                .otherwise(pl.col("frames").list.last())
-                .alias("last_throw"),
-            )
-            .pivot(
-                on="last_throw",
-                index="first_throw",
-                values="last_throw",
-                aggregate_function=pl.element().count(),
-            )
-            .fill_null(0)
-            .sort("first_throw")
-            .select("first_throw", *map(str, range(11)))
+def _(frames_data, pl, plt, sns):
+    import pandas as pd
+
+    # -------------------------------
+    # Build categorized transition data
+    # -------------------------------
+    data = (
+        frames_data.select("bowler_id", "frames", "is_strike", "is_spare")
+        .with_columns(
+            pl.col("frames").list.first().alias("first_throw"),
+            pl.when(pl.col("is_strike"))
+            .then(pl.lit("Strike"))
+            .when(pl.col("is_spare"))
+            .then(pl.lit("Spare"))
+            .otherwise(pl.lit("Open"))
+            .alias("outcome"),
         )
+        .group_by("bowler_id", "first_throw", "outcome")
+        .len()
+        .rename({"len": "count"})
+        .with_columns(
+            (
+                pl.col("count")
+                / pl.col("count").sum().over(["bowler_id", "first_throw"])
+            ).alias("prob")
+        )
+    )
 
-        return sns.heatmap(heatmap_data.drop("first_throw"))
+    pdf = data.to_pandas()
 
+    # Order axes explicitly
+    pdf["first_throw"] = pd.Categorical(
+        pdf["first_throw"], categories=range(11), ordered=True
+    )
+    pdf["outcome"] = pd.Categorical(
+        pdf["outcome"], categories=["Strike", "Spare", "Open"], ordered=True
+    )
 
-    plot_pin_sequence("Lucas")
+    # -------------------------------
+    # Faceted stacked bar chart (readable version)
+    # -------------------------------
+    g = sns.FacetGrid(
+        pdf,
+        col="bowler_id",
+        col_wrap=3,
+        height=3.5,
+        aspect=1.2,
+        sharey=True,
+    )
+
+    def stacked_bar(data, **kwargs):
+        pivot = data.pivot_table(
+            index="first_throw",
+            columns="outcome",
+            values="prob",
+            fill_value=0,
+        ).sort_index()
+
+        bottom = None
+        for outcome in pivot.columns:
+            plt.bar(
+                pivot.index,
+                pivot[outcome],
+                bottom=bottom,
+                width=0.8,
+                label=outcome,
+            )
+            bottom = pivot[outcome] if bottom is None else bottom + pivot[outcome]
+
+        plt.ylim(0, 1)
+        plt.xlabel("Pins on First Throw")
+        plt.ylabel("Probability")
+
+    g.map_dataframe(stacked_bar)
+    g.set_titles("{col_name}")
+
+    # Shared legend
+    handles, labels = plt.gca().get_legend_handles_labels()
+    g.fig.legend(
+        handles,
+        labels,
+        title="Frame Outcome",
+        bbox_to_anchor=(1.02, 0.5),
+        loc="center left",
+    )
+
+    plt.tight_layout()
+    plt.show()
+
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     #### Score Progression
     ---
     How well has each bowler done over time?
-    """
-    )
-    return
-
-
-@app.cell
-def _(bowler_frame):
-    print(bowler_frame)
+    """)
     return
 
 
@@ -474,7 +521,6 @@ def _(bowler_frame, pl, plt, sns):
             ax.tick_params(axis="x", labelrotation=30)
 
         plt.show()
-
 
     plot_rolling_mean(
         bowler_frame,
