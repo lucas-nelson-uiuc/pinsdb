@@ -1,3 +1,3 @@
 # Cumulative Scoring
 
-!(cumulative)[figures/cumulative_scoring.png]
+!(cumulative)[./figures/cumulative_scoring.png]
