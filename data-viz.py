@@ -206,7 +206,7 @@ def _(
     )
     gt_table = gt_table.fmt_number(columns=["Per Pin"], decimals=3)
     gt_table
-    return
+    return (GT,)
 
 
 @app.cell(hide_code=True)
@@ -269,6 +269,31 @@ def _(mo):
     ---
     How consistent is each bowler?
     """)
+    return
+
+
+@app.cell
+def _(GT, pl, sample_data):
+    N_SCORES: int = 20
+
+    (
+        GT(
+            sample_data.select(
+                pl.col("date").alias("Date"),
+                pl.col("bowler_id").alias("Bowler"),
+                pl.col("pins").alias("Pins"),
+                pl.col("score").alias("Score"),
+            )
+            .top_k(by="Score", k=N_SCORES)
+            .with_columns(
+                pl.col("Score").rank(method="max", descending=True).alias("Rank")
+            )
+            .select("Rank", "Date", "Bowler", "Pins", "Score")
+            .sort(by=("Rank", "Date"), descending=(False, True))
+        )
+        .data_color(columns="Rank", palette="Greys")
+        .data_color(columns=["Pins", "Score"], palette="Purples")
+    )
     return
 
 
@@ -383,7 +408,6 @@ def _(frames_data, pl, plt, sns):
 
     plt.tight_layout()
     plt.show()
-
     return
 
 
@@ -527,6 +551,104 @@ def _(bowler_frame, pl, plt, sns):
         bowler_ids=("Alek", "Cam", "Jake", "Lucas", "Ryley", "Spencer", "Tristan"),
         window=12,
     )
+    return
+
+
+@app.cell
+def _(bowler_frame, pl, plt):
+    df = (
+        bowler_frame.with_columns(pl.col("throws").bowling.compute_score())
+        .sort(by=("date", "game_id"))
+        .with_columns(
+            [
+                pl.col("score").cum_max().alias("cum_max"),
+                pl.col("score").cum_min().alias("cum_min"),
+            ]
+        )
+        .with_columns(
+            [
+                (pl.col("cum_max") > pl.col("cum_max").shift(1))
+                .fill_null(True)
+                .alias("new_max"),
+                (pl.col("cum_min") < pl.col("cum_min").shift(1))
+                .fill_null(True)
+                .alias("new_min"),
+            ]
+        )
+    )
+
+    scores_over_time = df.to_pandas()
+
+    # -----------------------------
+    # Plot cumulative max + min together
+    # -----------------------------
+    plt.figure(figsize=(11, 6))
+
+    plt.plot(scores_over_time["date"], scores_over_time["cum_max"], linewidth=2)
+    plt.plot(scores_over_time["date"], scores_over_time["cum_min"], linewidth=2)
+
+    # high-contrast palette
+    bowlers = scores_over_time["bowler_id"].unique()
+    pltt = plt.get_cmap("tab20").colors
+    color_map = {bowler: pltt[i % len(pltt)] for i, bowler in enumerate(bowlers)}
+
+    # -----------------------------
+    # Max record points + annotations
+    # -----------------------------
+    max_breaks = scores_over_time[scores_over_time["new_max"]]
+
+    for bowler, bowler_records in max_breaks.groupby("bowler_id"):
+        plt.scatter(
+            bowler_records["date"],
+            bowler_records["cum_max"],
+            s=70,
+            marker="^",
+            color=color_map[bowler],
+            label=bowler,
+            zorder=3,
+        )
+
+        for i, (_, row) in enumerate(bowler_records.iterrows()):
+            plt.annotate(
+                f"{bowler} ({row['cum_max']})",
+                (row["date"], row["cum_max"]),
+                xytext=(6 * (i % 3 - 1), 10 + 4 * (i % 2)),
+                textcoords="offset points",
+                ha="center",
+                fontsize=9,
+            )
+
+    # -----------------------------
+    # Min record points + annotations
+    # -----------------------------
+    min_breaks = scores_over_time[scores_over_time["new_min"]]
+
+    for bowler, bowler_records in min_breaks.groupby("bowler_id"):
+        plt.scatter(
+            bowler_records["date"],
+            bowler_records["cum_min"],
+            s=70,
+            marker="v",
+            color=color_map[bowler],
+            zorder=3,
+        )
+
+        for i, (_, row) in enumerate(bowler_records.iterrows()):
+            plt.annotate(
+                f"{bowler} ({row['cum_min']})",
+                (row["date"], row["cum_min"]),
+                xytext=(6 * (i % 3 - 1), -14 - 4 * (i % 2)),
+                textcoords="offset points",
+                ha="center",
+                fontsize=9,
+            )
+
+    plt.xlabel("Date")
+    plt.ylabel("Score")
+    plt.title("Cumulative Maximum and Minimum Scores Over Time")
+    plt.legend(title="Bowler")
+    plt.tight_layout()
+    plt.show()
     return
 
 

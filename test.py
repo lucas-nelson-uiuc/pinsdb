@@ -77,7 +77,6 @@ def _(bowler_frame, pl):
         .join(bowler_frame, on=("date", "game_id", "bowler_id"), how="right")
         .with_columns(pl.col("throws").bowling.compute_score())
     )
-    results
     return (results,)
 
 
