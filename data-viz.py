@@ -425,7 +425,7 @@ def _(mo):
 @app.cell
 def _(bowler_frame, pl, plt, sns):
     def plot_rolling_mean(
-        data: pl.DataFrame,
+        data,
         bowler_ids: list[str] | None = None,
         window: int = 10,
     ) -> None:
