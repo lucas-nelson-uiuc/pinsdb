@@ -24,6 +24,7 @@ def _():
 
     # pinsdb module
     from pinsdb.models import Game
+    from pinsdb.namespace.expressions import Bowling  # noqa: F401
 
     return GT, Game, attrs, datetime, pd, pl, plt, sns
 
