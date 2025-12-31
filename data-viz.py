@@ -648,6 +648,7 @@ def _(bowler_frame, pl, plt):
     plt.title("Cumulative Maximum and Minimum Scores Over Time")
     plt.legend(title="Bowler")
     plt.tight_layout()
+    plt.savefig("figures/cumulative_scores.png")
     plt.show()
     return
 
