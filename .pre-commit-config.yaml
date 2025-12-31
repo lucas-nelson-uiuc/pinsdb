@@ -11,6 +11,7 @@ repos:
     - id: trailing-whitespace
       exclude: \.html$          # skip HTML files
     - id: end-of-file-fixer
+      types: [python]           # only run on Python files
     - id: check-yaml
 - repo: local
   hooks:
