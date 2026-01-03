@@ -69,9 +69,7 @@ def _(Game, attrs, pl):
 
 @app.cell
 def _(bowler_frame, pl):
-    scoring_columns = ["Pins", "Points", "Lowest", "Highest"]
-    rates_columns = ["Per Game", "Per Frame", "Per Pin"]
-    frequency_columns = ["Strikes", "Spares", "Wombats", "Gutters"]
+    import polars.selectors as cs
 
     n_recent_games: int = 50
     col_recent_games: str = f"Recent Games ({n_recent_games:,})"
@@ -119,93 +117,94 @@ def _(bowler_frame, pl):
     summary_table = (
         summary_statistics_table.join(summary_detection_table, on="bowler_id")
         .with_columns(
-            (pl.col("Points") / pl.col("Games")).round(2).alias("Per Game"),
-            (pl.col("Points") / pl.col("Frames")).round(2).alias("Per Frame"),
-            (pl.col("Points") / pl.col("Pins")).round(3).alias("Per Pin"),
+            (pl.col("Points") / pl.col("Games")).round(2).alias("Points Per Game"),
+            (pl.col("Points") / pl.col("Frames")).round(2).alias("Points Per Frame"),
+            (pl.col("Points") / pl.col("Pins")).round(3).alias("Points Per Pin"),
+            (pl.col("Strikes") / pl.col("Games")).round(2).alias("Strikes Per Game"),
+            (pl.col("Spares") / pl.col("Games")).round(2).alias("Spares Per Game"),
+            (pl.col("Wombats") / pl.col("Games")).round(2).alias("Wombats Per Game"),
+            (pl.col("Gutters") / pl.col("Games")).round(2).alias("Gutters Per Game"),
         )
         .sort("Points", descending=True)
         .select(
             "bowler_id",
             "Games",
             "Frames",
-            *scoring_columns,
-            *rates_columns,
-            *frequency_columns,
-        )  # , col_recent_games)
+            "Pins",
+            cs.starts_with("Point"),
+            cs.starts_with("Strike"),
+            cs.starts_with("Spare"),
+            cs.starts_with("Wombat"),
+            cs.starts_with("Gutter"),
+        )
     )
-    return (
-        frames_data,
-        frequency_columns,
-        rates_columns,
-        scoring_columns,
-        summary_table,
-    )
+
+    summary_table
+    return cs, frames_data, summary_table
 
 
 @app.cell
-def _(
-    all_games,
-    frequency_columns,
-    rates_columns,
-    scoring_columns,
-    summary_table,
-):
+def _(all_games, cs, summary_table):
     from great_tables import GT
 
-    scoring_palette = "GnBu"
-    rates_pallete = "Purples"
-    frequency_palette = "Reds"
+    DATETIME_FORMAT = "%b %d, %Y"
+    RANGE_START = all_games[0].date.strftime(DATETIME_FORMAT)
+    RANGE_END = all_games[-1].date.strftime(DATETIME_FORMAT)
+
+    class Palette:
+        PINS = "Greens"
+        POINTS = "GnBu"
+        STRIKES = "PuBu"
+        SPARES = "Purples"
+        WOMBATS = "Oranges"
+        GUTTERS = "Reds"
 
     gt_table = (
         GT(summary_table)
         .tab_header(
             title="Bowling Statistics",
-            subtitle=f"Range from {all_games[0].date.strftime('%B %d, %Y')} to {all_games[-1].date.strftime('%B %d, %Y')} | Sorted by Total Points",
+            subtitle=f"{RANGE_START} to {RANGE_END} | Sorted by Total Points",
         )
         .tab_stub(rowname_col="bowler_id")
-        .tab_spanner(label="Scoring", columns=scoring_columns)
-        .tab_spanner(label="Rates", columns=rates_columns)
-        .tab_spanner(label="Frequency", columns=frequency_columns)
+        .tab_spanner(
+            label="Scoring",
+            columns=cs.starts_with("Pins") | cs.starts_with("Point"),
+        )
+        .tab_spanner(label="Strikes", columns=cs.starts_with("Strike"))
+        .tab_spanner(label="Spares", columns=cs.starts_with("Spare"))
+        .tab_spanner(label="Wombats", columns=cs.starts_with("Wombat"))
+        .tab_spanner(label="Gutters", columns=cs.starts_with("Gutter"))
         .data_color(
-            columns=["Pins"],
-            palette=scoring_palette,
+            columns=cs.starts_with("Pins"),
+            palette=Palette.PINS,
         )
         .data_color(
-            columns=["Points"],
-            palette=scoring_palette,
+            columns=cs.starts_with("Point"),
+            palette=Palette.POINTS,
         )
         .data_color(
-            columns=["Lowest", "Highest"],
-            palette=scoring_palette,
+            columns=cs.starts_with("Strike"),
+            palette=Palette.STRIKES,
         )
         .data_color(
-            columns=["Per Game"],
-            palette=rates_pallete,
+            columns=cs.starts_with("Spare"),
+            palette=Palette.SPARES,
         )
         .data_color(
-            columns=["Per Frame"],
-            palette=rates_pallete,
+            columns=cs.starts_with("Wombat"),
+            palette=Palette.WOMBATS,
         )
         .data_color(
-            columns=["Per Pin"],
-            palette=rates_pallete,
+            columns=cs.starts_with("Gutter"),
+            palette=Palette.GUTTERS,
         )
-        .data_color(
-            columns=["Strikes", "Spares"],
-            palette=frequency_palette,
+        .fmt_number(
+            columns=["Pins", "Points", "Frames", "Strikes", "Spares", "Wombats"],
+            decimals=0,
         )
-        .data_color(columns=["Wombats"], palette=frequency_palette)
-        .data_color(
-            columns=["Gutters"],
-            palette=frequency_palette,
-        )
+        .fmt_number(columns=["Points Per Pin"], decimals=3)
     )
 
-    gt_table = gt_table.fmt_number(
-        columns=["Pins", "Points", "Frames", "Strikes", "Spares", "Wombats"],
-        decimals=0,
-    )
-    gt_table = gt_table.fmt_number(columns=["Per Pin"], decimals=3)
     gt_table
     return (GT,)
 
@@ -253,7 +252,7 @@ def _(mo):
 
 @app.cell
 def _(sample_data, sns):
-    sns.displot(sample_data, x="score", hue="bowler_id", kind="kde", multiple="fill")
+    sns.displot(sample_data, x="score", hue="bowler_id", kind="hist", multiple="fill")
     return
 
 
@@ -275,7 +274,7 @@ def _(mo):
 
 @app.cell
 def _(GT, pl, sample_data):
-    N_SCORES: int = 20
+    N_SCORES: int = 10
 
     (
         GT(
@@ -291,6 +290,29 @@ def _(GT, pl, sample_data):
             )
             .select("Rank", "Date", "Bowler", "Pins", "Score")
             .sort(by=("Rank", "Date"), descending=(False, True))
+        )
+        .data_color(columns="Rank", palette="Greys")
+        .data_color(columns=["Pins", "Score"], palette="Purples")
+    )
+    return (N_SCORES,)
+
+
+@app.cell
+def _(GT, N_SCORES: int, pl, sample_data):
+    (
+        GT(
+            sample_data.select(
+                pl.col("date").alias("Date"),
+                pl.col("bowler_id").alias("Bowler"),
+                pl.col("pins").alias("Pins"),
+                pl.col("score").alias("Score"),
+            )
+            .bottom_k(by="Score", k=N_SCORES)
+            .with_columns(
+                pl.col("Score").rank(method="max", descending=True).alias("Rank")
+            )
+            .select("Rank", "Date", "Bowler", "Pins", "Score")
+            .sort(by=("Rank", "Date"), descending=True)
         )
         .data_color(columns="Rank", palette="Greys")
         .data_color(columns=["Pins", "Score"], palette="Purples")
