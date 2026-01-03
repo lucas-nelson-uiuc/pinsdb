@@ -5,8 +5,7 @@ from loguru import logger
 import itertools
 from pinsdb.bowlers import Bowler, REGISTERED_BOWLERS
 
-from pinsdb.db import DATABASE_SOURCE
-from pinsdb.constants import TOTAL_FRAME_PINS
+from pinsdb.constants import TOTAL_FRAME_PINS, DATABASE_SOURCE
 
 
 def extract_components(
@@ -77,7 +76,9 @@ class Game:
     date: datetime.date
 
     @classmethod
-    def load_game(cls, source: str, *bowler_id: str, verbose: bool = True) -> list["Game"]:
+    def load_game(
+        cls, source: str, *bowler_id: str, verbose: bool = True
+    ) -> list["Game"]:
         """Load game from source."""
         bowlers = dict()
         try:
@@ -110,9 +111,10 @@ class Game:
             if verbose:
                 raise e
 
-
     @classmethod
-    def load_games(cls, source: str | pathlib.Path = None, verbose: bool = True) -> list["Game"]:
+    def load_games(
+        cls, source: str | pathlib.Path = None, verbose: bool = True
+    ) -> list["Game"]:
         """Load file(s) from source(s)."""
         if not source:
             source = DATABASE_SOURCE

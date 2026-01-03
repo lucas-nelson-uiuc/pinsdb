@@ -44,12 +44,12 @@ class Bowling:
                 throw = -1
         expression = self._expr.list.get(throw)
         return expression.alias(f"{throw}_throw")
-    
+
     def get_highest_bowler(self) -> pl.Expr:
         """Return bowler with highest score."""
         expression = self._expr.top_k_by(by=pl.col("score"), k=1).get(index=0)
         return expression.alias("winner")
-    
+
     def get_lowest_bowler(self) -> pl.Expr:
         """Return bowler with lowest score."""
         expression = self._expr.bottom_k_by(by=pl.col("score"), k=1).get(index=0)

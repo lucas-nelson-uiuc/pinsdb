@@ -17,10 +17,10 @@ def mkdir(date: str, games: str, bowlers: str) -> None:
     except Exception as e:
         msg = "Expected date to be in YYYY-MM-DD format, received invalid entry."
         raise ValueError(msg) from e
-    
+
     directory = pathlib.Path(DATA_DIRECTORY).joinpath(date.replace("-", ""))
     directory.mkdir(exist_ok=False)
-    
+
     try:
         bowler_name_pattern = re.compile(r"[A-Z]{1,}[,[A-Z]{1,}]*")
         assert bowler_name_pattern.search(bowlers)
