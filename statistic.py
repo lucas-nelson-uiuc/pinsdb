@@ -1,10 +1,10 @@
 import marimo
 
-__generated_with = "0.18.4"
+__generated_with = "0.19.9"
 app = marimo.App(width="full")
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     # marimo notebook
     import marimo as mo
@@ -29,14 +29,13 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ### Load Games
+    ## **Load Games**
     ---
-    This will load all games from the files in `DATA_DIRECTORY` - until someone else uses this project this will be the local `.data/` folder.
     """)
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(Game, attrs, pl):
     # define bowlers to include in `bowler_frame`
     BOWLERS: tuple[str] = (
@@ -67,7 +66,7 @@ def _(Game, attrs, pl):
     return BOWLERS, all_games, bowler_frame
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(bowler_frame, pl):
     import polars.selectors as cs
 
@@ -118,12 +117,20 @@ def _(bowler_frame, pl):
         summary_statistics_table.join(summary_detection_table, on="bowler_id")
         .with_columns(
             (pl.col("Points") / pl.col("Games")).round(2).alias("Points Per Game"),
-            (pl.col("Points") / pl.col("Frames")).round(2).alias("Points Per Frame"),
+            (pl.col("Points") / pl.col("Frames"))
+            .round(2)
+            .alias("Points Per Frame"),
             (pl.col("Points") / pl.col("Pins")).round(3).alias("Points Per Pin"),
-            (pl.col("Strikes") / pl.col("Games")).round(2).alias("Strikes Per Game"),
+            (pl.col("Strikes") / pl.col("Games"))
+            .round(2)
+            .alias("Strikes Per Game"),
             (pl.col("Spares") / pl.col("Games")).round(2).alias("Spares Per Game"),
-            (pl.col("Wombats") / pl.col("Games")).round(2).alias("Wombats Per Game"),
-            (pl.col("Gutters") / pl.col("Games")).round(2).alias("Gutters Per Game"),
+            (pl.col("Wombats") / pl.col("Games"))
+            .round(2)
+            .alias("Wombats Per Game"),
+            (pl.col("Gutters") / pl.col("Games"))
+            .round(2)
+            .alias("Gutters Per Game"),
         )
         .sort("Points", descending=True)
         .select(
@@ -138,18 +145,17 @@ def _(bowler_frame, pl):
             cs.starts_with("Gutter"),
         )
     )
-
-    summary_table
     return cs, frames_data, summary_table
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(all_games, cs, summary_table):
     from great_tables import GT
 
     DATETIME_FORMAT = "%b %d, %Y"
     RANGE_START = all_games[0].date.strftime(DATETIME_FORMAT)
     RANGE_END = all_games[-1].date.strftime(DATETIME_FORMAT)
+
 
     class Palette:
         PINS = "Greens"
@@ -158,6 +164,7 @@ def _(all_games, cs, summary_table):
         SPARES = "Purples"
         WOMBATS = "Oranges"
         GUTTERS = "Reds"
+
 
     gt_table = (
         GT(summary_table)
@@ -210,15 +217,6 @@ def _(all_games, cs, summary_table):
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ### Plot Visuals
-    ---
-    """)
-    return
-
-
-@app.cell
 def _(BOWLERS: tuple[str], all_games, pl, sns):
     from pinsdb.namespace.compute import score_game, score_pins
 
@@ -243,20 +241,21 @@ def _(BOWLERS: tuple[str], all_games, pl, sns):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    #### Score Dominance
+    ## **Score Dominance**
     ---
-    Which bowlers share different scores?
     """)
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(sample_data, sns):
-    sns.displot(sample_data, x="score", hue="bowler_id", kind="hist", multiple="fill")
+    sns.displot(
+        sample_data, x="score", hue="bowler_id", kind="hist", multiple="fill"
+    )
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(sample_data, sns):
     sns.displot(sample_data, x="score", hue="bowler_id", stat="count", kind="ecdf")
     return
@@ -265,14 +264,14 @@ def _(sample_data, sns):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    #### Score Variance
+    ## **Score Variance**
     ---
     How consistent is each bowler?
     """)
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(GT, pl, sample_data):
     N_SCORES: int = 10
 
@@ -297,7 +296,7 @@ def _(GT, pl, sample_data):
     return (N_SCORES,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(GT, N_SCORES: int, pl, sample_data):
     (
         GT(
@@ -320,29 +319,16 @@ def _(GT, N_SCORES: int, pl, sample_data):
     return
 
 
-@app.cell
-def _(BOWLERS: tuple[str], sample_data, sns):
-    palette = sns.color_palette("magma", n_colors=len(BOWLERS))
-    sns.set_theme(style="darkgrid", palette=palette)
-
-    sns.violinplot(
-        sample_data, x="score", y="bowler_id", hue="bowler_id", palette=palette
-    )
-    sns.stripplot(sample_data, x="score", y="bowler_id", color=".3", jitter=0)
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    #### Pin Sequence
+    ## **Pin Sequence**
     ---
-    How well do bowlers do on their first throw? second throw?
     """)
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(frames_data, pl, plt, sns):
     import pandas as pd
 
@@ -393,6 +379,7 @@ def _(frames_data, pl, plt, sns):
         sharey=True,
     )
 
+
     def stacked_bar(data, **kwargs):
         pivot = data.pivot_table(
             index="first_throw",
@@ -416,6 +403,7 @@ def _(frames_data, pl, plt, sns):
         plt.xlabel("Pins on First Throw")
         plt.ylabel("Probability")
 
+
     g.map_dataframe(stacked_bar)
     g.set_titles("{col_name}")
 
@@ -437,147 +425,48 @@ def _(frames_data, pl, plt, sns):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    #### Score Progression
+    ## **Score Progression**
     ---
-    How well has each bowler done over time?
     """)
     return
 
 
-@app.cell
-def _(bowler_frame, pl, plt, sns):
-    def plot_rolling_mean(
-        data,
-        bowler_ids: list[str] | None = None,
-        window: int = 10,
-    ) -> None:
-        df = data
+@app.cell(hide_code=True)
+def _(bowler_frame):
+    from pinsdb.viz import plot_rolling_mean, plot_rolling_statistic
 
-        if bowler_ids is not None:
-            df = df.filter(pl.col("bowler_id").is_in(bowler_ids))
-
-        rolling = (
-            df.with_columns(pl.col("throws").bowling.compute_score())
-            .with_columns(
-                pl.col("score")
-                .rolling_mean(window)
-                .over("bowler_id")
-                .alias("rolling_mean"),
-                pl.col("score")
-                .rolling_std(window)
-                .over("bowler_id")
-                .alias("rolling_std"),
-            )
-            .sort(["bowler_id", "date"])
-        )
-
-        pdf = rolling.to_pandas()
-
-        g = sns.FacetGrid(
-            pdf,
-            col="bowler_id",
-            col_wrap=3,
-            height=3,
-            aspect=1.2,
-            sharex=True,
-            sharey=True,
-            despine=True,
-        )
-
-        # Scatter colored by score
-        g.map_dataframe(
-            sns.scatterplot,
-            x="date",
-            y="score",
-            hue="score",
-            palette="viridis",
-            alpha=0.6,
-            s=30,
-            legend=False,
-        )
-
-        # Rolling mean line
-        g.map_dataframe(
-            sns.lineplot,
-            x="date",
-            y="rolling_mean",
-            color="black",
-            linewidth=1.8,
-        )
-
-        # Rolling std band with dashed borders
-        def std_band(data, **kwargs):
-            plt.fill_between(
-                data["date"],
-                data["rolling_mean"] - data["rolling_std"],
-                data["rolling_mean"] + data["rolling_std"],
-                color="black",
-                alpha=0.15,
-                linewidth=0,
-            )
-            # dashed upper/lower lines
-            plt.plot(
-                data["date"],
-                data["rolling_mean"] + data["rolling_std"],
-                color="black",
-                linestyle="--",
-                linewidth=1,
-            )
-            plt.plot(
-                data["date"],
-                data["rolling_mean"] - data["rolling_std"],
-                color="black",
-                linestyle="--",
-                linewidth=1,
-            )
-
-        g.map_dataframe(std_band)
-
-        g.set_titles("{col_name}")
-        g.set_axis_labels("Date", "Score")
-
-        # Layout control
-        g.fig.set_size_inches(12, 8)
-        g.fig.subplots_adjust(
-            right=0.88,
-            top=0.90,
-            wspace=0.15,
-            hspace=0.25,
-        )
-
-        # Shared colorbar
-        norm = plt.Normalize(pdf["score"].min(), pdf["score"].max())
-        sm = plt.cm.ScalarMappable(norm=norm, cmap="viridis")
-        sm.set_array([])
-
-        cbar = g.fig.colorbar(
-            sm,
-            ax=g.axes,
-            fraction=0.035,
-            pad=0.02,
-        )
-        cbar.set_label("Score")
-
-        g.fig.suptitle(
-            f"Rolling Mean ± Std (window={window})",
-            fontsize=14,
-        )
-
-        # Rotate date ticks
-        for ax in g.axes.flat:
-            ax.tick_params(axis="x", labelrotation=30)
-
-        plt.show()
 
     plot_rolling_mean(
         bowler_frame,
         bowler_ids=("Alek", "Cam", "Jake", "Lucas", "Ryley", "Spencer", "Tristan"),
         window=12,
     )
+    return (plot_rolling_statistic,)
+
+
+@app.cell(hide_code=True)
+def _(frames_data, plot_rolling_statistic):
+    plot_rolling_statistic(
+        frames_data,
+        bowler_ids=("Alek", "Cam", "Jake", "Lucas", "Ryley", "Spencer", "Tristan"),
+        window=20,
+        statistic="strike",
+    )
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
+def _(frames_data, plot_rolling_statistic):
+    plot_rolling_statistic(
+        frames_data,
+        bowler_ids=("Alek", "Cam", "Jake", "Lucas", "Ryley", "Spencer", "Tristan"),
+        window=20,
+        statistic="spare",
+    )
+    return
+
+
+@app.cell(hide_code=True)
 def _(bowler_frame, pl, plt):
     df = (
         bowler_frame.with_columns(pl.col("throws").bowling.compute_score())
