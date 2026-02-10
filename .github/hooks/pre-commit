@@ -1,0 +1,5 @@
+#!/bin/sh
+marimo export html statistics.py -o docs/statistics.html --force
+marimo export html results.py -o docs/results.html --force
+
+git add docs/statistics.html docs/results.html
