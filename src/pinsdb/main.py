@@ -1,8 +1,17 @@
 import re
 import pathlib
 import datetime
-
 import click
+
+from pinsdb.namespace.compute import score_pins, score_game
+
+
+DATA_DIRECTORY = "/Users/lucasnelson/Desktop/open_source/pinsdb/.data"
+
+
+@click.group()
+def cli():
+    pass
 
 
 @click.command
@@ -10,7 +19,6 @@ import click
 @click.option("--games", prompt="Number of games")
 @click.option("--bowlers", prompt="Bowlers (comma-separated)")
 def mkdir(date: str, games: str, bowlers: str) -> None:
-    DATA_DIRECTORY = "/Users/lucasnelson/Desktop/open_source/pinsdb/.data"
 
     try:
         datetime.datetime.strptime(date, "%Y-%m-%d")
@@ -44,5 +52,28 @@ def mkdir(date: str, games: str, bowlers: str) -> None:
             raise e
 
 
+@click.command
+@click.option("--date", prompt="Date of game, in format YYYY-MM-DD")
+def score(date: str) -> None:
+    date = datetime.datetime.strptime(date, "%Y-%m-%d").strftime("%Y%m%d")
+    directory = pathlib.Path(DATA_DIRECTORY) / date
+    for game in sorted(directory.iterdir()):
+        print(f"=== {game}")
+        file = directory / game
+        lines = file.read_text().split("\n")
+        for line in lines:
+            bowler, *throws = line.split(",")
+            if len(throws) < 2:
+                continue
+            throws = list(map(int, throws))
+            pins = score_pins(throws=throws)
+            score = score_game(throws=list(map(int, throws)))
+            print(f"Bowler: {bowler:>5} | Pins: {pins:>3} | Score: {score:>3}")
+
+
+cli.add_command(mkdir)
+cli.add_command(score)
+
+
 if __name__ == "__main__":
-    mkdir()
+    cli()
