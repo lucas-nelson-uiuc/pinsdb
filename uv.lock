@@ -1223,6 +1223,8 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "marimo" },
+    { name = "pre-commit" },
     { name = "pytest" },
 ]
 
@@ -1244,7 +1246,11 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=8.3.4" }]
+dev = [
+    { name = "marimo", specifier = ">=0.18.4" },
+    { name = "pre-commit", specifier = ">=4.5.1" },
+    { name = "pytest", specifier = ">=8.3.4" },
+]
 
 [[package]]
 name = "platformdirs"

@@ -30,5 +30,7 @@ packages = ["src/pinsdb"]
 
 [dependency-groups]
 dev = [
+    "marimo>=0.18.4",
+    "pre-commit>=4.5.1",
     "pytest>=8.3.4",
 ]
