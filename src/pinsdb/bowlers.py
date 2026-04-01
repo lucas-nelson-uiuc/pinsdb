@@ -35,6 +35,9 @@ Tristan = Bowler(bowler_id="Tristan", nicknames=("TRI", "BRI"))
 Munson = Bowler(bowler_id="Munson", nicknames=("MU", "MUN"))
 Malachi = Bowler(bowler_id="Malachi", nicknames=("MA",))
 Humarya = Bowler(bowler_id="Humarya", nicknames=("HUM",))
+Ethan = Bowler(bowler_id="Ethan", nicknames=("ETH",))
+Jack = Bowler(bowler_id="Jack", nicknames=("JAC",))
+Rick = Bowler(bowler_id="Rick", nicknames=("RIC",))
 
 REGISTERED_BOWLERS = sorted(
     (
@@ -53,5 +56,8 @@ REGISTERED_BOWLERS = sorted(
         Munson,
         Malachi,
         Humarya,
+        Ethan,
+        Jack,
+        Rick,
     )
 )
