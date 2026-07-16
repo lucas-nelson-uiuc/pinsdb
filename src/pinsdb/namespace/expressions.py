@@ -34,6 +34,11 @@ class Bowling:
         )
         return expression.alias("is_wombat")
 
+    def is_open(self) -> pl.Expr:
+        """Detect if a frame is open."""
+        expression = self._expr.list.sum() < TOTAL_FRAME_PINS
+        return expression.alias("is_open")
+
     def get_throw(self, throw: Literal["first", "second", "last"] = "first") -> pl.Expr:
         match throw:
             case "first":

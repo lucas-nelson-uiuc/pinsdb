@@ -1,14 +1,12 @@
 import marimo
 
-__generated_with = "0.19.9"
+__generated_with = "0.18.4"
 app = marimo.App(width="full")
 
 
 @app.cell(hide_code=True)
 def _():
     # marimo notebook
-
-    import datetime
 
     # object handling
     import attrs
@@ -26,21 +24,21 @@ def _():
     from pinsdb.models import Game
     from pinsdb.namespace.expressions import Bowling  # noqa: F401
 
-    return GT, Game, attrs, datetime, pd, pl, plt, sns
+    return GT, Game, attrs, pd, pl, plt, sns
 
 
 @app.cell(hide_code=True)
 def _(Game, attrs, pl):
     # define bowlers to include in `bowler_frame`
     BOWLERS: tuple[str] = (
-        "Alek",
         "Cam",
-        "Jake",
-        "Lucas",
-        "Munson",
         "Ryley",
         "Spencer",
-        "Tristan",
+        "Lucas",
+        # "Alek",
+        # "Jake",
+        # "Munson",
+        # "Tristan",
     )
 
     # games stored as a Python object
@@ -57,6 +55,94 @@ def _(Game, attrs, pl):
         .filter(pl.col("bowler_id").is_in(BOWLERS))
     )
     return (bowler_frame,)
+
+
+@app.cell(hide_code=True)
+def _(bowler_frame, pl):
+    ranks = (
+        bowler_frame.with_columns(pl.col("throws").bowling.compute_score())
+        .group_by("date", "game_id")
+        .agg(
+            pl.col("bowler_id").bowling.get_highest_bowler().alias("winner"),
+            pl.col("bowler_id").bowling.get_lowest_bowler().alias("loser"),
+            pl.col("score").rank(method="ordinal", descending=True).alias("rank"),
+            pl.col("score"),
+            pl.col("bowler_id"),
+        )
+        .explode("rank", "score", "bowler_id")
+        .group_by("bowler_id")
+        .agg(
+            pl.len().alias("Games"),
+            (pl.col("rank") == 1).sum().alias("First"),
+            (pl.col("rank") == 2).sum().alias("Second"),
+            (pl.col("rank") == 3).sum().alias("Third"),
+            (pl.col("loser") == pl.col("bowler_id")).sum().alias("Losses"),
+            pl.col("date").filter(pl.col("rank") == 1).max().alias("Last Win"),
+            pl.col("date")
+            .filter(pl.col("loser") == pl.col("bowler_id"))
+            .max()
+            .alias("Last Loss"),
+            pl.col("score").filter(pl.col("rank") == 1).max().alias("Highest Win"),
+            pl.col("score").filter(pl.col("rank") == 2).max().alias("Highest Second"),
+            pl.col("score").filter(pl.col("rank") == 3).max().alias("Highest Third"),
+            pl.col("score")
+            .filter(pl.col("loser") == pl.col("bowler_id"))
+            .max()
+            .alias("Highest Loss"),
+        )
+        .with_columns(
+            (pl.col("First") / pl.col("Games")).alias("Win Rate"),
+            (
+                (pl.col("First") + pl.col("Second") + pl.col("Third")) / pl.col("Games")
+            ).alias("Podium Rate"),
+            (pl.col("Losses") / pl.col("Games")).alias("Loss Rate"),
+        )
+        .sort("First", "Second", "Third", descending=True)
+    )
+    return (ranks,)
+
+
+@app.cell(hide_code=True)
+def _(GT, ranks, results):
+    # Define column groups
+    podium_columns = ["First", "Second", "Third", "Losses"]
+    scoring_columns = [
+        "Highest Win",
+        "Highest Second",
+        "Highest Third",
+        "Highest Loss",
+    ]
+    rates_columns = ["Win Rate", "Podium Rate", "Loss Rate"]
+    date_columns = ["Last Win", "Last Loss"]
+
+    # Color palettes
+    scoring_palette = "GnBu"
+    rates_palette = "Purples"
+
+    # Build GT table
+    gt_table = (
+        GT(ranks)
+        .tab_header(
+            title="Bowling Results",
+            subtitle=f"From {results['date'].min().strftime('%B %d, %Y')} to {results['date'].max().strftime('%B %d, %Y')}",
+        )
+        .tab_stub(rowname_col="bowler_id")
+        .tab_spanner(label="Podium", columns=podium_columns)
+        .tab_spanner(label="Scoring", columns=scoring_columns)
+        .tab_spanner(label="Rates", columns=rates_columns)
+        .tab_spanner(label="Dates", columns=date_columns)
+        .data_color(columns=scoring_columns, palette=scoring_palette)
+        .data_color(columns="First", palette="PuBu")
+        .data_color(columns="Second", palette="Blues")
+        .data_color(columns="Third", palette="BuGn")
+        .data_color(columns="Losses", palette="OrRd")
+        .data_color(columns=rates_columns, palette=rates_palette)
+        .fmt_number(columns=scoring_columns, decimals=0)
+        .fmt_percent(columns=rates_columns, decimals=1)
+    )
+
+    gt_table
+    return
 
 
 @app.cell(hide_code=True)
@@ -79,114 +165,6 @@ def _(bowler_frame, pl):
         .with_columns(pl.col("throws").bowling.compute_score())
     )
     return (results,)
-
-
-@app.cell(hide_code=True)
-def _(datetime, pl, results):
-    summary = (
-        results.with_columns(
-            [
-                (pl.col("outcome") == "winner").cast(pl.Int8).alias("win"),
-                (pl.col("outcome") == "loser").cast(pl.Int8).alias("loss"),
-            ]
-        )
-        .group_by("bowler_id")
-        .agg(
-            [
-                pl.len().alias("Games"),
-                pl.sum("win").alias("Wins"),
-                pl.sum("loss").alias("Losses"),
-                pl.col("score")
-                .filter(pl.col("win") == 1)
-                .max()
-                .alias("Highest Win"),
-                pl.col("score")
-                .filter(pl.col("win") == 1)
-                .mean()
-                .alias("Average Win"),
-                pl.col("score")
-                .filter(pl.col("win") == 1)
-                .min()
-                .alias("Lowest Win"),
-                pl.col("score")
-                .filter(pl.col("loss") == 1)
-                .max()
-                .alias("Highest Loss"),
-                pl.col("score")
-                .filter(pl.col("loss") == 1)
-                .mean()
-                .alias("Average Loss"),
-                pl.col("score")
-                .filter(pl.col("loss") == 1)
-                .min()
-                .alias("Lowest Loss"),
-                pl.col("date").filter(pl.col("win") == 1).max().alias("Last Win"),
-                pl.col("date")
-                .filter(pl.col("loss") == 1)
-                .max()
-                .alias("Last Loss"),
-            ]
-        )
-        .with_columns(
-            [
-                (pl.col("Wins") / pl.col("Games")).alias("Win Rate"),
-                (pl.col("Losses") / pl.col("Games")).alias("Loss Rate"),
-            ]
-        )
-        .sort("Wins", descending=True)
-        .fill_null(value=datetime.datetime.today().date())
-    )
-    return (summary,)
-
-
-@app.cell(hide_code=True)
-def _(GT, results, summary):
-    # Define column groups
-    scoring_columns = ["Games", "Wins", "Losses"]
-    maximum_columns = ["Highest Win", "Highest Loss"]
-    average_columns = [
-        "Average Win",
-        "Average Loss",
-    ]
-    minimum_columns = [
-        "Lowest Win",
-        "Lowest Loss",
-    ]
-    rates_columns = ["Win Rate", "Loss Rate"]
-    date_columns = ["Last Win", "Last Loss"]
-
-    # Color palettes
-    scoring_palette = "GnBu"
-    minmax_palette = "Blues"
-    rates_palette = "Purples"
-
-    # Build GT table
-    gt_table = (
-        GT(summary)
-        .tab_header(
-            title="Bowling Statistics",
-            subtitle=f"From {results['date'].min().strftime('%B %d, %Y')} to {results['date'].max().strftime('%B %d, %Y')}",
-        )
-        .tab_stub(rowname_col="bowler_id")
-        .tab_spanner(label="Scoring", columns=scoring_columns)
-        .tab_spanner(label="Maximums", columns=maximum_columns)
-        .tab_spanner(label="Averages", columns=average_columns)
-        .tab_spanner(label="Minimums", columns=minimum_columns)
-        .tab_spanner(label="Rates", columns=rates_columns)
-        .tab_spanner(label="Dates", columns=date_columns)
-        .data_color(columns=scoring_columns, palette=scoring_palette)
-        .data_color(
-            columns=maximum_columns + average_columns + minimum_columns,
-            palette=minmax_palette,
-        )
-        .data_color(columns=rates_columns, palette=rates_palette)
-        .fmt_number(columns=scoring_columns, decimals=0)
-        .fmt_number(columns=average_columns, decimals=2)
-        .fmt_percent(columns=rates_columns, decimals=1)
-    )
-
-    gt_table
-    return
 
 
 @app.cell(hide_code=True)
@@ -348,7 +326,6 @@ def _(pd, pl, plt, results, sns):
 
         plt.tight_layout()
         return plt.show()
-
 
     _()
     return
