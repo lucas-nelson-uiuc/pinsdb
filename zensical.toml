@@ -71,6 +71,17 @@ nav = [
 # ----------------------------------------------------------------------------
 # Section for configuring theme options
 # ----------------------------------------------------------------------------
+# Enables "=== " content tabs (used on the homepage to switch between
+# Current Leader / All-Time High / Most Recent Session).
+#
+# Read more: https://zensical.org/docs/authoring/content-tabs/
+# ----------------------------------------------------------------------------
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.pymdownx.superfences]
+[project.markdown_extensions.pymdownx.tabbed]
+alternate_style = true
+
+# ----------------------------------------------------------------------------
 [project.theme]
 
 # change this to "classic" to use the traditional Material for MkDocs look.
