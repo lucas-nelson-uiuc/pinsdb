@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.9"
+__generated_with = "0.18.4"
 app = marimo.App(width="full")
 
 
@@ -47,6 +47,7 @@ def _(Game, attrs, pl):
         "Ryley",
         "Spencer",
         "Tristan",
+        "Stuart",
     )
 
     # games stored as a Python object
@@ -117,20 +118,12 @@ def _(bowler_frame, pl):
         summary_statistics_table.join(summary_detection_table, on="bowler_id")
         .with_columns(
             (pl.col("Points") / pl.col("Games")).round(2).alias("Points Per Game"),
-            (pl.col("Points") / pl.col("Frames"))
-            .round(2)
-            .alias("Points Per Frame"),
+            (pl.col("Points") / pl.col("Frames")).round(2).alias("Points Per Frame"),
             (pl.col("Points") / pl.col("Pins")).round(3).alias("Points Per Pin"),
-            (pl.col("Strikes") / pl.col("Games"))
-            .round(2)
-            .alias("Strikes Per Game"),
+            (pl.col("Strikes") / pl.col("Games")).round(2).alias("Strikes Per Game"),
             (pl.col("Spares") / pl.col("Games")).round(2).alias("Spares Per Game"),
-            (pl.col("Wombats") / pl.col("Games"))
-            .round(2)
-            .alias("Wombats Per Game"),
-            (pl.col("Gutters") / pl.col("Games"))
-            .round(2)
-            .alias("Gutters Per Game"),
+            (pl.col("Wombats") / pl.col("Games")).round(2).alias("Wombats Per Game"),
+            (pl.col("Gutters") / pl.col("Games")).round(2).alias("Gutters Per Game"),
         )
         .sort("Points", descending=True)
         .select(
@@ -156,7 +149,6 @@ def _(all_games, cs, summary_table):
     RANGE_START = all_games[0].date.strftime(DATETIME_FORMAT)
     RANGE_END = all_games[-1].date.strftime(DATETIME_FORMAT)
 
-
     class Palette:
         PINS = "Greens"
         POINTS = "GnBu"
@@ -164,7 +156,6 @@ def _(all_games, cs, summary_table):
         SPARES = "Purples"
         WOMBATS = "Oranges"
         GUTTERS = "Reds"
-
 
     gt_table = (
         GT(summary_table)
@@ -249,9 +240,7 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(sample_data, sns):
-    sns.displot(
-        sample_data, x="score", hue="bowler_id", kind="hist", multiple="fill"
-    )
+    sns.displot(sample_data, x="score", hue="bowler_id", kind="hist", multiple="fill")
     return
 
 
@@ -379,7 +368,6 @@ def _(frames_data, pl, plt, sns):
         sharey=True,
     )
 
-
     def stacked_bar(data, **kwargs):
         pivot = data.pivot_table(
             index="first_throw",
@@ -402,7 +390,6 @@ def _(frames_data, pl, plt, sns):
         plt.ylim(0, 1)
         plt.xlabel("Pins on First Throw")
         plt.ylabel("Probability")
-
 
     g.map_dataframe(stacked_bar)
     g.set_titles("{col_name}")
@@ -434,7 +421,6 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(bowler_frame):
     from pinsdb.viz import plot_rolling_mean, plot_rolling_statistic
-
 
     plot_rolling_mean(
         bowler_frame,
