@@ -4,4 +4,4 @@ icon: lucide/rocket
 
 # PinsDB
 
-Database for pins
+Database for pins.
