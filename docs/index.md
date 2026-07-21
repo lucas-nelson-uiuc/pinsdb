@@ -10,19 +10,19 @@ A running record of every frame my friends and I have bowled -- who's winning, w
 
 | Metric | Value |
 |---|---|
-| Games logged | 956 |
-| Sessions | 91 |
+| Games logged | 968 |
+| Sessions | 92 |
 | Bowlers tracked | 9 |
-| Total pins knocked down | 87,958 |
-| Date range | Jul 23, 2024 – Jul 05, 2026 |
+| Total pins knocked down | 89,119 |
+| Date range | Jul 23, 2024 – Jul 19, 2026 |
 
 ## Standings
 
 | | Bowler | Wins | Games | Win Rate |
 |---|---|---|---|---|
 | 🥇 | **Spencer** | 68 | 206 | 33% |
-| 🥈 | **Lucas** | 65 | 206 | 32% |
-| 🥉 | **Ryley** | 47 | 179 | 26% |
+| 🥈 | **Lucas** | 67 | 209 | 32% |
+| 🥉 | **Ryley** | 48 | 182 | 26% |
 
 ## Highlights
 
@@ -36,25 +36,22 @@ A running record of every frame my friends and I have bowled -- who's winning, w
 
 === "Most Recent Session"
 
-    July 05, 2026
+    July 19, 2026
 
     | Game | Bowler | Score |
     |---|---|---|
-    | 1 | Lucas | 152 |
-    | 1 | Cam | 143 |
-    | 1 | Ryley | 143 |
-    | 1 | Spencer | 125 |
-    | 1 | Stuart | 91 |
-    | 2 | Lucas | 172 |
-    | 2 | Cam | 161 |
-    | 2 | Spencer | 157 |
-    | 2 | Stuart | 107 |
-    | 2 | Ryley | 106 |
-    | 3 | Lucas | 175 |
-    | 3 | Cam | 156 |
-    | 3 | Spencer | 140 |
-    | 3 | Ryley | 124 |
-    | 3 | Stuart | 60 |
+    | 1 | Ryley | 177 |
+    | 1 | Lucas | 158 |
+    | 1 | Cam | 126 |
+    | 1 | Stuart | 87 |
+    | 2 | Lucas | 156 |
+    | 2 | Ryley | 118 |
+    | 2 | Cam | 116 |
+    | 2 | Stuart | 113 |
+    | 3 | Lucas | 193 |
+    | 3 | Cam | 164 |
+    | 3 | Ryley | 147 |
+    | 3 | Stuart | 109 |
 
 ## Fun Awards
 
@@ -68,7 +65,7 @@ A running record of every frame my friends and I have bowled -- who's winning, w
 
 === "🔥 On Fire"
 
-    **Lucas** is riding a **3**-game win streak heading into the next session.
+    **Lucas** is riding a **2**-game win streak heading into the next session.
 
 ## Fun Facts
 
@@ -85,4 +82,4 @@ A running record of every frame my friends and I have bowled -- who's winning, w
 
 Want the full picture? Check out [Statistics](statistic.html) for strikes, spares, and scoring trends, or browse every [Result](results.html) game by game.
 
-*Last updated July 16, 2026.*
+*Last updated July 21, 2026.*
