@@ -19,7 +19,6 @@ def cli():
 @click.option("--games", prompt="Number of games")
 @click.option("--bowlers", prompt="Bowlers (comma-separated)")
 def mkdir(date: str, games: str, bowlers: str) -> None:
-
     try:
         datetime.datetime.strptime(date, "%Y-%m-%d")
     except Exception as e:
@@ -68,7 +67,7 @@ def score(date: str) -> None:
             throws = list(map(int, throws))
             pins = score_pins(throws=throws)
             score = score_game(throws=list(map(int, throws)))
-            print(f"Bowler: {bowler:>5} | Pins: {pins:>3} | Score: {score:>3}")
+            print(f"Bowler: {bowler:>8} | Pins: {pins:>3} | Score: {score:>3}")
 
 
 cli.add_command(mkdir)
